@@ -1,0 +1,32 @@
+name: Deploy # Любое имя
+
+on:
+  # Тригер на закрытый ПР в ветку production
+  pull_request:
+    types: [closed]
+    branches:
+      - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Deploy to Hoster.by
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }} # IP адрес VPS
+        username: ${{ secrets.SSH_USER }} # username VPS
+        key: ${{ secrets.SSH_PRIVATE_KEY }} # SSH private ключ VPS
+        # Скрипт действий на VPS
+        script: |
+          docker system prune -af
+          cd royal-hotel
+          git pull origin production
+          docker compose build
+          docker compose down
+          docker compose up -d --remove-orphans
+          docker system prune -af
