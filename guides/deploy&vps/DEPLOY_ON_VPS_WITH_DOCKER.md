@@ -27,7 +27,7 @@ ___
 Далее в папке `home/{usename}/.ssh` появятся 2 файла. 
 9. Создать запись в `authorized_keys`:  
 `cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys`
-10. [Установка русской локали]() *(При необходимости)*
+10. [Установка русской локали](https://github.com/jespy666/guides-more/blob/main/guides/deploy%26vps/SETUP_RU_LOCALE_ON_VPS.mdhttps://github.com/jespy666/guides-more/blob/main/guides/deploy%26vps/SETUP_RU_LOCALE_ON_VPS.md) *(При необходимости)*
 
 ### Этап 2 - Настройка GitHub
 1. Авторизация GitHub репозитория и профиля с VPS:
@@ -45,7 +45,7 @@ ___
 2. Создание Workflow для CD:
    - Создать GitHub Actions:  
        `{repo}` -> `Actions` -> `New workflow` -> `set up a workflow yourself` (любое название)
-   - Заполнить содержимое Workflow из [Примера]()
+   - Заполнить содержимое Workflow из [Примера](https://github.com/jespy666/guides-more/blob/main/pipelines/deploy_on_vps.yml)
 
 ### Этап 3 - Процесс деплоя
 1. Находясь на VPS клонируем репозиторий:  
