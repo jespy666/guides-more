@@ -48,7 +48,7 @@
 
 ### Этап 3 - Процесс деплоя
 1. Находясь на VPS клонируем репозиторий:  
-`git clone "your_repo_clone_url_from_ssh"`
+`git clone --single-branch --branch production "your_repo_clone_url_from_ssh"`
 2. Создать файл `.env` в корне проекта с переменными окружения *(При необходимости)*:  
 `nano .env` -> заполнить
 3. Находясь в `{repo}` создать `pull request` в ветку `production`
