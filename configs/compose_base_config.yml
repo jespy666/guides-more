@@ -1,0 +1,108 @@
+# Упаковка всех переменных окружения из .env в &environment-defaults
+x-environment-defaults: &environment-defaults
+  ENVIRONMENT: ${ENVIRONMENT}
+
+# Список служб docker compose
+services:
+
+  # Пример конфигурации backend на fastapi
+  backend:
+
+    # Обозначения внутренней сети Docker к которой принадлежит служба
+    networks:
+      - guide
+
+    # Контекст сборки образа Dockerfile
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    # Имя контейнера в docker compose
+    container_name: backend
+
+    # Распаковка переменных окружения в службу
+    environment:
+      <<: *environment-defaults
+
+    # Шэринг томов из кода в контейнер
+    volumes:
+      - ./backend:/app # Прим: скопировать папку backend/ в корень контейнера в папку app/
+
+    # Политика перезагрузки контейнера при сбоях
+    restart: always
+
+    # Команда запуска службы
+    command: sh -c "alembic upgrade head && python -m src.app"
+
+    # Зависимость от других служб (Порядок важен)
+    depends_on:
+      postgres:
+        condition: service_healthy # Прим: в данном случае зависимость от состояния службы
+
+   # Пример конфигурации nginx в связке с React как статика
+  nginx:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+      # Аргументы, которые будут переданы в сборку Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+
+    container_name: nginx
+    restart: always
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+
+    # Проброс портов за пределы Docker сети
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+      - redis
+    networks:
+      - mira
+
+  # Пример конфигурации PostgreSQL БД
+  postgres:
+    image: postgres:17 # Прим: Всегда указывать определенную версию образа
+    container_name: postgres
+
+    # Пример передачи ограниченного кол-ва переменных окружений в службу
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - mira-data:/var/lib/postgresql/data
+
+    # Состояние проверки здоровья службы
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      postgres -c max_connections=1000
+               -c shared_buffers=256MB
+               -c effective_cache_size=768MB
+               -c maintenance_work_mem=64MB
+               -c checkpoint_completion_target=0.7
+               -c wal_buffers=16MB
+               -c default_statistics_target=100
+    restart: always
+    networks:
+      - mira
+
+# Глобальный шэринг томов из контейнера и обратно
+volumes:
+  mira-data:
+  redis_data:
+
+# Конфигурация внутренней сети Docker
+networks:
+  mira:
+    driver: bridge
